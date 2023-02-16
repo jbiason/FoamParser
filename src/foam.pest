@@ -1,0 +1,56 @@
+whitespace = _{ " " | "\t" | "\r" | "\n" }
+letters = _{ 'a'..'z' | 'A'..'Z' }
+numbers = _{ '0'..'9' }
+special_chars = _{ "_" | "(" | ")" | "." | "*" }
+
+multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
+
+in_between = { (whitespace | multi_comment)+ }
+
+definition = { letters ~ (letters | numbers | special_chars)+ }
+value = { (letters | numbers | special_chars)+ }
+
+attribution = { definition ~ in_between+ ~ value ~ (in_between+ ~ value)* ~ ";" }
+
+file = { SOI ~ (
+	whitespace
+	| multi_comment
+	| single_comment
+	| attribution
+	)+
+	~ EOI }
+
+/* identifier = { letters+ ~ (!whitespace ~ (letters | numbers | "_" | "(" | ")" | "," | "*"))* } */
+/* rvalue = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "_" | "." | "-" | "(" | ")")+ } */
+
+/* include = { "#" ~ identifier ~ in_between ~ "\"" ~ identifier ~ "\"" } */
+/* attribution = { identifier ~ (in_between ~ rvalue)+ ~ ";" } */
+/* dictionary = { identifier ~ in_between ~ "{" ~ ( */
+/* 	dictionary */
+/* 	| list */
+/* 	| attribution */ 
+/* 	| whitespace */ 
+/* 	| multi_comment */ 
+/* 	| single_comment */ 
+/* 	| include */
+/* 	)+ ~ "}" } */
+/* list_size = _{ ASCII_DIGIT+ ~ whitespace+ } */
+/* list_middle = { "(" ~ ( */ 
+/* 	dictionary */
+/* 	| rvalue */ 
+/* 	| list_middle */
+/* 	| whitespace */ 
+/* 	| multi_comment */ 
+/* 	| single_comment */
+/* 	)+ ~ ")" } */
+/* list = { identifier ~ in_between ~ list_size? ~ list_middle ~ ";" } */
+
+/* file = { SOI ~ ( */
+/* 	whitespace */ 
+/* 	| multi_comment */ 
+/* 	| single_comment */ 
+/* 	| dictionary */
+/* 	| list */
+/* 	| attribution)* */ 
+/* 	~ EOI } */
