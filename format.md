@@ -43,42 +43,42 @@ All data ﬁles that are read and written by OpenFOAM begin with a dictionary na
 
 The following example shows the use of keywords to provide data for a case using the types of entry described so far. The extract, from an fvSolution dictionary ﬁle, contains 2 dictionaries, solvers and PISO. The solvers dictionary contains multiple data entries for solver and tolerances for each of the pressure and velocity equations, represented by the p and U keywords respectively; the PISO dictionary contains algorithm controls.
 
-16\
-17solvers\
-18{\
-19    p\
-20    {\
-21        solver          PCG;\
-22        preconditioner  DIC;\
-23        tolerance       1e-06;\
-24        relTol          0.05;\
-25    }\
-26\
-27    pFinal\
-28    {\
-29        $p;\
-30        relTol          0;\
-31    }\
-32\
-33    U\
-34    {\
-35        solver          smoothSolver;\
-36        smoother        symGaussSeidel;\
-37        tolerance       1e-05;\
-38        relTol          0;\
-39    }\
-40}\
-41\
-42PISO\
-43{\
-44    nCorrectors     2;\
-45    nNonOrthogonalCorrectors 0;\
-46    pRefCell        0;\
-47    pRefValue       0;\
-48}\
-49\
-50\
-51// ************************************************************************* //
+16  \
+17  solvers\
+18  {\
+19      p\
+20      {\
+21          solver          PCG;\
+22          preconditioner  DIC;\
+23          tolerance       1e-06;\
+24          relTol          0.05;\
+25      }\
+26  \
+27      pFinal\
+28      {\
+29          $p;\
+30          relTol          0;\
+31      }\
+32  \
+33      U\
+34      {\
+35          solver          smoothSolver;\
+36          smoother        symGaussSeidel;\
+37          tolerance       1e-05;\
+38          relTol          0;\
+39      }\
+40  }\
+41  \
+42  PISO\
+43  {\
+44      nCorrectors     2;\
+45      nNonOrthogonalCorrectors 0;\
+46      pRefCell        0;\
+47      pRefValue       0;\
+48  }\
+49  \
+50  \
+51  // ************************************************************************* //
 
 ### 4.2.4 Lists
 
@@ -136,23 +136,6 @@ The I/O format for a dimensionSet is 7 scalars delimited by square brackets, e.g
     [0 2 -1 0 0 0 0]
 
 | No. | Property | SI unit | USCS unit |
-|
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
 | 1 | Mass | kilogram (kg) | pound-mass (lbm) |
 | 2 | Length | metre (m) | foot (ft) |
 | 3 | Time | second (s) | second (s) |
@@ -160,25 +143,6 @@ The I/O format for a dimensionSet is 7 scalars delimited by square brackets, e.g
 | 5 | Quantity | mole (mol) | mole (mol) |
 | 6 | Current | ampere (A) | ampere (A) |
 | 7 | Luminous intensity | candela (cd) | candela (cd) |
-|
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-|\
- |
 
 Table 4.1: Base units for SI and USCS
 
@@ -201,37 +165,9 @@ The majority of dimensioned keyword lookups set a default for the word name whic
 Much of the I/O data in OpenFOAM are tensor ﬁelds, e.g. velocity, pressure data, that are read from and written into the time directories. OpenFOAM writes ﬁeld data using keyword entries as described in Table [4.2](https://doc.cfd.direct/openfoam/user-guide-v10/basic-file-format#x17-1310072) .
 
 | Keyword | Description | Example |
-|
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
 | dimensions | Dimensions of ﬁeld | [1 1 -2 0 0 0 0] |
 | internalField | Value of internal ﬁeld | uniform (1 0 0) |
 | boundaryField | Boundary ﬁeld | see ﬁle listing in section [4.2.8](https://doc.cfd.direct/openfoam/user-guide-v10/basic-file-format#x17-1310004.2.8) |
-|
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-
-* * * * *
-
- |
-|\
- |
 
 Table 4.2: Main keywords used in ﬁeld dictionaries.
 
@@ -247,30 +183,30 @@ The data begins with an entry for its dimensions. Following that, is the interna
 
 The boundaryField is a dictionary containing a set of entries whose names correspond to each of the names of the boundary patches listed in the boundary ﬁle in the polyMesh directory. Each patch entry is itself a dictionary containing a list of keyword entries. The mandatory entry, type, describes the patch ﬁeld condition speciﬁed for the ﬁeld. The remaining entries correspond to the type of patch ﬁeld condition selected and can typically include ﬁeld data specifying initial conditions on patch faces. A selection of patch ﬁeld conditions available in OpenFOAM are listed in section [5.2.1](https://doc.cfd.direct/openfoam/user-guide-v10/boundaries#x25-1780005.2.1) , section [5.2.2](https://doc.cfd.direct/openfoam/user-guide-v10/boundaries#x25-1790005.2.2) and section [5.2.3](https://doc.cfd.direct/openfoam/user-guide-v10/boundaries#x25-1800005.2.3) , with a description and the data that must be speciﬁed with it. Example ﬁeld dictionary entries for velocity U are shown below:
 
-16dimensions      [0 1 -1 0 0 0 0];\
-17\
-18internalField   uniform (0 0 0);\
-19\
-20boundaryField\
-21{\
-22    movingWall\
-23    {\
-24        type            fixedValue;\
-25        value           uniform (1 0 0);\
-26    }\
-27\
-28    fixedWalls\
-29    {\
-30        type            noSlip;\
-31    }\
-32\
-33    frontAndBack\
-34    {\
-35        type            empty;\
-36    }\
-37}\
-38\
-39// ************************************************************************* //
+16  dimensions      [0 1 -1 0 0 0 0];\
+17  \
+18  internalField   uniform (0 0 0);\
+19  \
+20  boundaryField\
+21  {\
+22      movingWall\
+23      {\
+24          type            fixedValue;\
+25          value           uniform (1 0 0);\
+26      }\
+27  \
+28      fixedWalls\
+29      {\
+30          type            noSlip;\
+31      }\
+32  \
+33      frontAndBack\
+34      {\
+35          type            empty;\
+36      }\
+37  }\
+38  \
+39  // ************************************************************************* //
 
 ### 4.2.9 Macro expansion
 
