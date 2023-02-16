@@ -245,4 +245,21 @@ mod parsing {
         )]);
         assert_eq!(result.as_ref(), &expected);
     }
+
+    #[test]
+    fn two_attribs() {
+        let source = "version 2.0;format foam;";
+        let result = Foam::try_from(source).unwrap();
+        let expected = HashMap::from([
+            (
+                String::from("version"),
+                FoamElement::Values(vec![String::from("2.0")]),
+            ),
+            (
+                String::from("format"),
+                FoamElement::Values(vec![String::from("foam")]),
+            ),
+        ]);
+        assert_eq!(result.as_ref(), &expected);
+    }
 }
