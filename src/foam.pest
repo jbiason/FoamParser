@@ -3,8 +3,8 @@ letters = _{ 'a'..'z' | 'A'..'Z' }
 numbers = _{ '0'..'9' }
 special_chars = _{ "_" | "(" | ")" | "." | "*" }
 
-multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
-single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
+multi_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+single_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
 in_between = _{ (whitespace | multi_comment)+ }
 
