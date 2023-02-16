@@ -1,5 +1,7 @@
 //! Parse a Foam file into a major structure.
 
+use std::collections::HashMap;
+
 use pest::Parser;
 use pest_derive::Parser;
 
@@ -8,20 +10,37 @@ use pest_derive::Parser;
 struct FoamParser;
 
 #[derive(Debug, PartialEq)]
-pub enum Foam {
-    Attribution {
-        variable: String,
-        values: Vec<String>,
-    },
+pub enum FoamElement {
+    Values(Vec<String>),
+    // Attribution {
+    //     variable: String,
+    //     values: Vec<String>,
+    // },
 }
 
-impl Foam {
-    pub fn parse(source: &str) -> Vec<Foam> {
-        let file = FoamParser::parse(Rule::file, source)
+/// The main Foam parser.
+#[derive(Debug, PartialEq)]
+pub struct Foam {
+    root: HashMap<String, FoamElement>,
+}
+// Note: I could done this inside the enum, but I don't want to expose the
+//       HashMap to the user.
+
+impl AsRef<HashMap<String, FoamElement>> for Foam {
+    fn as_ref(&self) -> &HashMap<String, FoamElement> {
+        &self.root
+    }
+}
+
+impl TryFrom<&str> for Foam {
+    type Error = (); // FIX
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let file = FoamParser::parse(Rule::file, value)
             .expect("Failed to parse file")
             .next()
             .unwrap();
-        let mut result = Vec::new();
+        let mut root = HashMap::new();
 
         for line in file.into_inner() {
             match line.as_rule() {
@@ -32,17 +51,13 @@ impl Foam {
                         .into_iter()
                         .map(|x| x.as_str().to_string())
                         .collect::<Vec<String>>();
-                    let as_foam = Foam::Attribution {
-                        variable: name.to_string(),
-                        values,
-                    };
-                    result.push(as_foam);
+                    root.insert(name.into(), FoamElement::Values(values));
                 }
                 Rule::EOI => (),
                 r => panic!("I don't know what {r:?} is!"),
             }
         }
-        result
+        Ok(Foam { root })
     }
 }
 
@@ -52,7 +67,8 @@ mod parser {
 
     #[test]
     fn multi_comment() {
-        let parse = FoamParser::parse(Rule::multi_comment, "/* this is comment */");
+        let parse =
+            FoamParser::parse(Rule::multi_comment, "/* this is comment */");
         assert!(parse.is_ok());
     }
 
@@ -62,7 +78,10 @@ mod parser {
         assert!(parse.is_ok(), "{:#?}", parse);
         let parse = FoamParser::parse(Rule::definition, "div(phi,U)");
         assert!(parse.is_ok(), "{:#?}", parse);
-        let parse = FoamParser::parse(Rule::definition, "div((nuEff*dev2(T(grad(U)))))");
+        let parse = FoamParser::parse(
+            Rule::definition,
+            "div((nuEff*dev2(T(grad(U)))))",
+        );
         assert!(parse.is_ok(), "{:#?}", parse);
         let parse = FoamParser::parse(Rule::definition, "FoamFile");
         assert!(parse.is_ok(), "{:#?}", parse);
@@ -74,7 +93,10 @@ mod parser {
     fn attribution() {
         let parse = FoamParser::parse(Rule::attribution, "version 2.0;");
         assert!(parse.is_ok(), "{:#?}", parse);
-        let parse = FoamParser::parse(Rule::attribution, "div(U)          Gauss linear;");
+        let parse = FoamParser::parse(
+            Rule::attribution,
+            "div(U)          Gauss linear;",
+        );
         assert!(parse.is_ok(), "{:#?}", parse);
     }
 
@@ -86,7 +108,8 @@ mod parser {
 
     #[test]
     fn single_comment() {
-        let parse = FoamParser::parse(Rule::single_comment, "// this is comment");
+        let parse =
+            FoamParser::parse(Rule::single_comment, "// this is comment");
         assert!(parse.is_ok());
     }
 
@@ -211,13 +234,15 @@ mod parsing {
     #[test]
     fn just_attribs() {
         let source = "version 2.0 1.0 0.0;";
-        let result = Foam::parse(source);
-        assert_eq!(
-            result.as_ref(),
-            [Foam::Attribution {
-                variable: "version".into(),
-                values: vec!["2.0".into(), "1.0".into(), "0.0".into()]
-            }]
-        )
+        let result = Foam::try_from(source).unwrap();
+        let expected = HashMap::from([(
+            String::from("version"),
+            FoamElement::Values(vec![
+                String::from("2.0"),
+                String::from("1.0"),
+                String::from("0.0"),
+            ]),
+        )]);
+        assert_eq!(result.as_ref(), &expected);
     }
 }
