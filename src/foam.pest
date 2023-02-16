@@ -21,11 +21,7 @@ file = { SOI ~ (
 	)+
 	~ EOI }
 
-/* identifier = { letters+ ~ (!whitespace ~ (letters | numbers | "_" | "(" | ")" | "," | "*"))* } */
-/* rvalue = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "_" | "." | "-" | "(" | ")")+ } */
-
 /* include = { "#" ~ identifier ~ in_between ~ "\"" ~ identifier ~ "\"" } */
-/* attribution = { identifier ~ (in_between ~ rvalue)+ ~ ";" } */
 /* dictionary = { identifier ~ in_between ~ "{" ~ ( */
 /* 	dictionary */
 /* 	| list */
@@ -45,12 +41,3 @@ file = { SOI ~ (
 /* 	| single_comment */
 /* 	)+ ~ ")" } */
 /* list = { identifier ~ in_between ~ list_size? ~ list_middle ~ ";" } */
-
-/* file = { SOI ~ ( */
-/* 	whitespace */ 
-/* 	| multi_comment */ 
-/* 	| single_comment */ 
-/* 	| dictionary */
-/* 	| list */
-/* 	| attribution)* */ 
-/* 	~ EOI } */
