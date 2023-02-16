@@ -1,23 +1,54 @@
 //! Parse a Foam file into a major structure.
 
+use pest::Parser;
 use pest_derive::Parser;
 
 #[derive(Parser)]
 #[grammar = "foam.pest"]
 struct FoamParser;
 
+#[derive(Debug, PartialEq)]
 pub enum Foam {
-    Attribution { name: String, value: String },
+    Attribution {
+        variable: String,
+        values: Vec<String>,
+    },
 }
 
 impl Foam {
-    pub fn parse(source: &str) -> Self {}
+    pub fn parse(source: &str) -> Vec<Foam> {
+        let file = FoamParser::parse(Rule::file, source)
+            .expect("Failed to parse file")
+            .next()
+            .unwrap();
+        let mut result = Vec::new();
+
+        for line in file.into_inner() {
+            match line.as_rule() {
+                Rule::attribution => {
+                    let mut inner_rules = line.into_inner();
+                    let name: &str = inner_rules.next().unwrap().as_str();
+                    let values = inner_rules
+                        .into_iter()
+                        .map(|x| x.as_str().to_string())
+                        .collect::<Vec<String>>();
+                    let as_foam = Foam::Attribution {
+                        variable: name.to_string(),
+                        values,
+                    };
+                    result.push(as_foam);
+                }
+                Rule::EOI => (),
+                r => panic!("I don't know what {r:?} is!"),
+            }
+        }
+        result
+    }
 }
 
 #[cfg(test)]
 mod parser {
     use super::*;
-    use pest::Parser;
 
     #[test]
     fn multi_comment() {
@@ -172,3 +203,21 @@ mod parser {
 //     assert!(parse.is_ok(), "{:?}", parse);
 // }
 // }
+
+#[cfg(test)]
+mod parsing {
+    use super::*;
+
+    #[test]
+    fn just_attribs() {
+        let source = "version 2.0 1.0 0.0;";
+        let result = Foam::parse(source);
+        assert_eq!(
+            result.as_ref(),
+            [Foam::Attribution {
+                variable: "version".into(),
+                values: vec!["2.0".into(), "1.0".into(), "0.0".into()]
+            }]
+        )
+    }
+}

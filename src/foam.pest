@@ -6,7 +6,7 @@ special_chars = _{ "_" | "(" | ")" | "." | "*" }
 multi_comment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = { "//" ~ (!NEWLINE ~ ANY)* }
 
-in_between = { (whitespace | multi_comment)+ }
+in_between = _{ (whitespace | multi_comment)+ }
 
 definition = { letters ~ (letters | numbers | special_chars)+ }
 value = { (letters | numbers | special_chars)+ }
