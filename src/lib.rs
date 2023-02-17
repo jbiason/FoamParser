@@ -12,10 +12,7 @@ struct FoamParser;
 #[derive(Debug, PartialEq)]
 pub enum FoamElement {
     Values(Vec<String>),
-    // Attribution {
-    //     variable: String,
-    //     values: Vec<String>,
-    // },
+    List(Vec<String>),
 }
 
 /// The main Foam parser.
@@ -32,14 +29,28 @@ impl AsRef<HashMap<String, FoamElement>> for Foam {
     }
 }
 
+#[derive(Debug)]
+pub enum FoamError {
+    InvalidFile,
+    EmptyFile,
+}
+
+impl From<pest::error::Error<Rule>> for FoamError {
+    fn from(_: pest::error::Error<Rule>) -> Self {
+        FoamError::InvalidFile
+    }
+}
+
 impl TryFrom<&str> for Foam {
-    type Error = (); // FIX
+    type Error = FoamError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let file = FoamParser::parse(Rule::file, value)
-            .expect("Failed to parse file")
+        let file = FoamParser::parse(Rule::file, value)?
             .next()
-            .unwrap();
+            .ok_or(FoamError::EmptyFile)?;
+
+        /* ?
+        .next()?; */
         let mut root = HashMap::new();
 
         for line in file.into_inner() {
@@ -54,6 +65,16 @@ impl TryFrom<&str> for Foam {
                     root.insert(name.into(), FoamElement::Values(values));
                 }
                 Rule::EOI => (),
+                Rule::list => {
+                    let mut inner_rules = line.into_inner();
+                    let name: &str = inner_rules.next().unwrap().as_str();
+                    println!("{:?}", inner_rules);
+                    let values = inner_rules
+                        .into_iter()
+                        .map(|x| x.as_str().to_string())
+                        .collect::<Vec<String>>();
+                    root.insert(name.into(), FoamElement::List(values));
+                }
                 r => panic!("I don't know what {r:?} is!"),
             }
         }
@@ -125,6 +146,13 @@ mod parser {
     #[test]
     fn list() {
         let text = "list_name ( 1 2 3 );";
+        let parse = FoamParser::parse(Rule::list, text);
+        assert!(parse.is_ok(), "{:#?}", parse);
+    }
+
+    #[test]
+    fn short_list() {
+        let text = "a_list (1 2 3);";
         let parse = FoamParser::parse(Rule::list, text);
         assert!(parse.is_ok(), "{:#?}", parse);
     }
@@ -223,7 +251,7 @@ mod parser {
 // }
 
 #[cfg(test)]
-mod parsing {
+mod as_struct {
     use super::*;
 
     #[test]
@@ -289,6 +317,21 @@ mod parsing {
                 FoamElement::Values(vec![String::from("2")]),
             ),
         ]);
+        assert_eq!(result.as_ref(), &expected);
+    }
+
+    #[test]
+    fn list() {
+        let source = "a_list (1 2 3);";
+        let result = Foam::try_from(source).unwrap();
+        let expected = HashMap::from([(
+            String::from("a_list"),
+            FoamElement::List(vec![
+                String::from("1"),
+                String::from("2"),
+                String::from("3"),
+            ]),
+        )]);
         assert_eq!(result.as_ref(), &expected);
     }
 }

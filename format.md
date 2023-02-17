@@ -115,8 +115,8 @@ respectively; the PISO dictionary contains algorithm controls.
 
 OpenFOAM applications contain lists, e.g. a list of vertex coordinates for a
 mesh description. Lists are commonly found in I/O and have a format of their
-own in which the entries are contained within round braces `( )`. There is also a
-choice of format preceeding the round braces:
+own in which the entries are contained within round braces `( )`. There is also
+a choice of format preceeding the round braces:
 
 -   the keyword is followed immediately by round braces
 

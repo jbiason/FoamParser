@@ -1,3 +1,8 @@
+// inner_list => "(" value ")"
+// attrib     => variable <space> value inner_list value ";".
+// list       => variable <space> "(" value inner_list ")"
+// dict       => variable <space> "{" attrib | list | dict "}"
+
 whitespace = _{ " " | "\t" | "\r" | "\n" }
 letters = _{ 'a'..'z' | 'A'..'Z' }
 numbers = _{ '0'..'9' }
@@ -27,6 +32,7 @@ file = { SOI ~ (
 	whitespace
 	| multi_comment
 	| single_comment
+	| list
 	| attribution
 	)+
 	~ EOI }
