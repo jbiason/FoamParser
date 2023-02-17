@@ -129,6 +129,13 @@ mod parser {
         assert!(parse.is_ok(), "{:#?}", parse);
     }
 
+    #[test]
+    fn list_in_list() {
+        let text = "list_name ( (1 2 3) (4 5 6) );";
+        let parse = FoamParser::parse(Rule::list, text);
+        assert!(parse.is_ok(), "{:#?}", parse);
+    }
+
     // #[test]
     // fn dictionary() {
     //     let text = "FoamFile\n{\nversion 2.0;\nformat ascii;\nclass dictionary;\nlocation system;\nobject caseSetupDict;\n}";
@@ -263,6 +270,23 @@ mod parsing {
             (
                 String::from("format"),
                 FoamElement::Values(vec![String::from("foam")]),
+            ),
+        ]);
+        assert_eq!(result.as_ref(), &expected);
+    }
+
+    #[test]
+    fn attribs_with_special_chars() {
+        let source = "fun_code 1;\np(U) 2;";
+        let result = Foam::try_from(source).unwrap();
+        let expected = HashMap::from([
+            (
+                String::from("fun_code"),
+                FoamElement::Values(vec![String::from("1")]),
+            ),
+            (
+                String::from("p(U)"),
+                FoamElement::Values(vec![String::from("2")]),
             ),
         ]);
         assert_eq!(result.as_ref(), &expected);

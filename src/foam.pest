@@ -1,14 +1,15 @@
 whitespace = _{ " " | "\t" | "\r" | "\n" }
 letters = _{ 'a'..'z' | 'A'..'Z' }
 numbers = _{ '0'..'9' }
-special_chars = _{ "_" | "(" | ")" | "." | "*" }
+special_chars = _{ "_" | "." | "*" }
 
 multi_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
 in_between = _{ (whitespace | multi_comment | single_comment)+ }
 
-definition = { letters ~ (letters | numbers | special_chars)+ }
+def_middle = _{ (letters | numbers | special_chars | "(" ~ def_middle ~ ")")+ } 
+definition = { letters ~ def_middle+ }
 value = { (letters | numbers)+ ~ (letters | numbers | special_chars)* }
 
 attribution = { definition ~ in_between+ ~ value ~ (in_between+ ~ value)* ~ ";" }
