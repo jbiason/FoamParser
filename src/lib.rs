@@ -122,17 +122,12 @@ mod parser {
         assert!(parse.is_ok(), "{:?}", parse);
     }
 
-    // #[test]
-    // fn attribution() {
-    //     let parse = FoamParser::parse(Rule::attribution, "version 2.0;");
-    //     assert!(parse.is_ok(), "{:?}", parse);
-    // }
-
-    // #[test]
-    // fn broken_attribution() {
-    //     let parse = FoamParser::parse(Rule::attribution, "version 2.0");
-    //     assert!(parse.is_err(), "{:?}", parse);
-    // }
+    #[test]
+    fn list() {
+        let text = "list_name ( 1 2 3 );";
+        let parse = FoamParser::parse(Rule::list, text);
+        assert!(parse.is_ok(), "{:#?}", parse);
+    }
 
     // #[test]
     // fn dictionary() {
@@ -145,13 +140,6 @@ mod parser {
     // fn dict_in_dict() {
     //     let text = "dict1 { dict2 { class bad; } }";
     //     let parse = FoamParser::parse(Rule::dictionary, text);
-    //     assert!(parse.is_ok(), "{:#?}", parse);
-    // }
-
-    // #[test]
-    // fn list() {
-    //     let text = "list_name ( 1 2 3 );";
-    //     let parse = FoamParser::parse(Rule::list, text);
     //     assert!(parse.is_ok(), "{:#?}", parse);
     // }
 

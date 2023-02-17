@@ -6,12 +6,21 @@ special_chars = _{ "_" | "(" | ")" | "." | "*" }
 multi_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
-in_between = _{ (whitespace | multi_comment)+ }
+in_between = _{ (whitespace | multi_comment | single_comment)+ }
 
 definition = { letters ~ (letters | numbers | special_chars)+ }
-value = { (letters | numbers | special_chars)+ }
+value = { (letters | numbers)+ ~ (letters | numbers | special_chars)* }
 
 attribution = { definition ~ in_between+ ~ value ~ (in_between+ ~ value)* ~ ";" }
+
+list_size = _{ numbers+ ~ in_between+ }
+list_values = { "(" ~ (
+	value
+	| in_between
+	| list_values 
+	/* dictionary */
+	)+ ~ ")" }
+list = { definition ~ in_between ~ list_size? ~ list_values ~ ";" }
 
 file = { SOI ~ (
 	whitespace
@@ -31,13 +40,3 @@ file = { SOI ~ (
 /* 	| single_comment */ 
 /* 	| include */
 /* 	)+ ~ "}" } */
-/* list_size = _{ ASCII_DIGIT+ ~ whitespace+ } */
-/* list_middle = { "(" ~ ( */ 
-/* 	dictionary */
-/* 	| rvalue */ 
-/* 	| list_middle */
-/* 	| whitespace */ 
-/* 	| multi_comment */ 
-/* 	| single_comment */
-/* 	)+ ~ ")" } */
-/* list = { identifier ~ in_between ~ list_size? ~ list_middle ~ ";" } */
