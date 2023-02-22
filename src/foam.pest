@@ -1,9 +1,4 @@
-// inner_list => "(" value ")"
-// attrib     => variable <space> value inner_list value ";".
-// list       => variable <space> "(" value inner_list ")"
-// dict       => variable <space> "{" attrib | list | dict "}"
-
-whitespace = _{ " " | "\t" | "\r" | "\n" }
+spaces = _{ " " | "\t" | "\r" | "\n" }
 letters = _{ 'a'..'z' | 'A'..'Z' }
 numbers = _{ '0'..'9' }
 special_chars = _{ "_" | "." | "*" }
@@ -11,39 +6,52 @@ special_chars = _{ "_" | "." | "*" }
 multi_comment = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 single_comment = _{ "//" ~ (!NEWLINE ~ ANY)* }
 
-in_between = _{ (whitespace | multi_comment | single_comment)+ }
+// This is a special rule of Pest, defining what `~` can hold -- unless the
+// rule starts with `@`, meaning there are no WHITESPACE between elements.
+WHITESPACE = _{ (spaces | multi_comment | single_comment)+ }
 
+// p(U) is a valid defintion (as long as it doesn't have any separators), but
+// they always must start with a letter.
 def_middle = _{ (letters | numbers | special_chars | "(" ~ def_middle ~ ")")+ } 
-definition = { letters ~ def_middle+ }
-value = { (letters | numbers)+ ~ (letters | numbers | special_chars)* }
+definition = @{ letters ~ def_middle+ }
+value = @{ (letters | numbers)+ ~ (letters | numbers | special_chars)* }
 
-attribution = { definition ~ in_between+ ~ value ~ (in_between+ ~ value)* ~ ";" }
+// Lists are represented with "(" and ")".
+// Before the first bracket, a number can appear, to point the number of
+// elements in the list (e.g., `a_list (1 2 3);`)
+// Lists can have list as elements; only the top level one needs a `;` after
+// it; e.g `a_list ( (inner list) (no semicolons) );`
+list_size = _{ numbers+ }
+list = { list_size? 
+	~ "("
+	~ element
+	~ element*
+	~ ")"}
 
-list_size = _{ numbers+ ~ in_between+ }
-list_values = { "(" ~ (
-	value
-	| in_between
-	| list_values 
-	/* dictionary */
-	)+ ~ ")" }
-list = { definition ~ in_between ~ list_size? ~ list_values ~ ";" }
+// At top level, everything is an attribution. Everything is "definition
+// value;" but the format accepts multiple values in one attribution (e.g.,
+// `definition value1 value2 value3;`). Not sure the difference between this
+// kind of attribution and the usage of a list.
+// Inside dictionaries, the attribution of values also requires the tailing
+// `;`.
+element = _{ value | list }
+attribution = { definition 
+	~ element 
+	~ element* 
+	~ ";" }
+inner = { attribution* }
 
-file = { SOI ~ (
-	whitespace
-	| multi_comment
-	| single_comment
-	| list
-	| attribution
-	)+
+file = _{ SOI ~
+	inner
 	~ EOI }
 
-/* include = { "#" ~ identifier ~ in_between ~ "\"" ~ identifier ~ "\"" } */
-/* dictionary = { identifier ~ in_between ~ "{" ~ ( */
-/* 	dictionary */
-/* 	| list */
-/* 	| attribution */ 
-/* 	| whitespace */ 
-/* 	| multi_comment */ 
-/* 	| single_comment */ 
-/* 	| include */
-/* 	)+ ~ "}" } */
+// include = { "#" ~ identifier ~ separator ~ "\"" ~ identifier ~ "\"" }
+// dictionary = { identifier ~ separator ~ "{" ~ (
+// 	dictionary
+// 	| list
+// 	| attribution 
+// 	| whitespace 
+// 	| multi_comment 
+// 	| single_comment 
+// 	| include
+// 	)+ ~ "}" }
