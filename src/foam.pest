@@ -29,7 +29,7 @@ list = { list_size?
 	~ ")" }
 
 // Dictionaries have "{" and "}", but everything inside is a definition.
-dictionary = { "{"
+dictionary = _{ "{"
 	~ (attribution | dict_attribution)
 	~ (attribution | dict_attribution)*
 	~ "}" }

@@ -18,6 +18,7 @@ pub enum FoamElement {
     Element(String),
     Attribution(String, Vec<FoamElement>),
     List(Vec<FoamElement>),
+    Dict(String, Vec<FoamElement>),
 }
 
 /// The main Foam parser.
@@ -75,7 +76,6 @@ impl Foam {
             }
             Rule::value => FoamElement::Element(pair.as_str().to_string()),
             Rule::list => {
-                println!("List: {:?}", pair);
                 let values = pair
                     .into_inner()
                     .map(|pair| {
@@ -84,6 +84,16 @@ impl Foam {
                     })
                     .collect::<Vec<FoamElement>>();
                 FoamElement::List(values)
+            }
+            Rule::dict_attribution => {
+                println!("Dict: {:?}", pair);
+                let mut inner_rules = pair.into_inner();
+                let definition =
+                    inner_rules.next().unwrap().as_str().to_string();
+                let elements = inner_rules
+                    .map(|pair| Foam::parse_value(pair))
+                    .collect::<Vec<FoamElement>>();
+                FoamElement::Dict(definition, elements)
             }
             r => panic!("Can't handle \"{r:?}\""),
         }
