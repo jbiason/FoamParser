@@ -26,7 +26,13 @@ list = { list_size?
 	~ "("
 	~ element
 	~ element*
-	~ ")"}
+	~ ")" }
+
+// Dictionaries have "{" and "}", but everything inside is a definition.
+dictionary = { "{"
+	~ (attribution | dictionary)
+	~ (attribution | dictionary)*
+	~ "}" }
 
 // At top level, everything is an attribution. Everything is "definition
 // value;" but the format accepts multiple values in one attribution (e.g.,

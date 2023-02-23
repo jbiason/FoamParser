@@ -1,5 +1,8 @@
 //! Parse a Foam file into a major structure.
 
+#[cfg(test)]
+mod parser_tests;
+
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
@@ -20,8 +23,6 @@ pub enum FoamElement {
 pub struct Foam {
     root: Vec<FoamElement>,
 }
-// Note: I could done this inside the enum, but I don't want to expose the
-//       HashMap to the user.
 
 impl AsRef<Vec<FoamElement>> for Foam {
     fn as_ref(&self) -> &Vec<FoamElement> {
@@ -84,82 +85,6 @@ impl Foam {
                 FoamElement::List(values)
             }
             r => panic!("Can't handle \"{r:?}\""),
-        }
-    }
-}
-
-#[cfg(test)]
-mod parser {
-    use super::*;
-
-    mod attrib {
-        use super::*;
-        #[test]
-        fn single_value() {
-            let result = FoamParser::parse(Rule::attribution, "a_var value;");
-            assert!(result.is_ok());
-        }
-
-        #[test]
-        fn multiple_values() {
-            let result =
-                FoamParser::parse(Rule::attribution, "a_var value1 valu2;");
-            assert!(result.is_ok());
-        }
-
-        #[test]
-        fn invalid_defintion() {
-            let result = FoamParser::parse(Rule::attribution, "1_var value;");
-            assert!(result.is_err());
-        }
-    }
-
-    mod multi_comment {
-        use super::*;
-
-        #[test]
-        fn comment() {
-            let result =
-                FoamParser::parse(Rule::multi_comment, "/* this is comment */");
-            assert!(result.is_ok());
-        }
-
-        #[test]
-        fn broken() {
-            let result =
-                FoamParser::parse(Rule::multi_comment, "/* this is comment");
-            assert!(result.is_err());
-        }
-
-        #[test]
-        fn embedded() {
-            let result = FoamParser::parse(
-                Rule::multi_comment,
-                "/* this /* is */ comment */",
-            );
-            assert!(result.is_ok());
-        }
-    }
-
-    mod list {
-        use super::*;
-
-        #[test]
-        fn with_size() {
-            let result = FoamParser::parse(Rule::list, "2 ( 1 2 )");
-            assert!(result.is_ok());
-        }
-
-        #[test]
-        fn no_size() {
-            let result = FoamParser::parse(Rule::list, "(1 2)");
-            assert!(result.is_ok());
-        }
-
-        #[test]
-        fn list_in_list() {
-            let result = FoamParser::parse(Rule::list, "( (1 2) (3 4))");
-            assert!(result.is_ok());
         }
     }
 }
