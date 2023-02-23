@@ -2,6 +2,8 @@
 
 #[cfg(test)]
 mod parser_tests;
+#[cfg(test)]
+mod struct_tests;
 
 use pest::iterators::Pair;
 use pest::Parser;
@@ -86,87 +88,5 @@ impl Foam {
             }
             r => panic!("Can't handle \"{r:?}\""),
         }
-    }
-}
-
-#[cfg(test)]
-mod foam_struct {
-    use super::*;
-
-    #[test]
-    fn attribution() {
-        let text = "a_var value;";
-        let result = Foam::try_from(text).unwrap();
-        let expected = vec![FoamElement::Attribution(
-            String::from("a_var"),
-            vec![FoamElement::Element(String::from("value"))],
-        )];
-        assert_eq!(result.as_ref(), &expected);
-    }
-
-    #[test]
-    fn multiple_attribution() {
-        let text = "a_var value1 value2 value3;";
-        let result = Foam::try_from(text).unwrap();
-        let expected = vec![FoamElement::Attribution(
-            String::from("a_var"),
-            vec![
-                FoamElement::Element(String::from("value1")),
-                FoamElement::Element(String::from("value2")),
-                FoamElement::Element(String::from("value3")),
-            ],
-        )];
-        assert_eq!(result.as_ref(), &expected);
-    }
-
-    #[test]
-    fn two_attributions() {
-        let text = "var1 value1; var2 value2;";
-        let result = Foam::try_from(text).unwrap();
-        let expected = vec![
-            FoamElement::Attribution(
-                String::from("var1"),
-                vec![FoamElement::Element(String::from("value1"))],
-            ),
-            FoamElement::Attribution(
-                String::from("var2"),
-                vec![FoamElement::Element(String::from("value2"))],
-            ),
-        ];
-        assert_eq!(result.as_ref(), &expected);
-    }
-
-    #[test]
-    fn a_list() {
-        let text = "var ( 1 2 );";
-        let result = Foam::try_from(text).unwrap();
-        let expected = vec![FoamElement::Attribution(
-            String::from("var"),
-            vec![FoamElement::List(vec![
-                FoamElement::Element(String::from("1")),
-                FoamElement::Element(String::from("2")),
-            ])],
-        )];
-        assert_eq!(result.as_ref(), &expected);
-    }
-
-    #[test]
-    fn list_of_lists() {
-        let text = "var ((1 2) (4 5));";
-        let result = Foam::try_from(text).unwrap();
-        let expected = vec![FoamElement::Attribution(
-            String::from("var"),
-            vec![FoamElement::List(vec![
-                FoamElement::List(vec![
-                    FoamElement::Element(String::from("1")),
-                    FoamElement::Element(String::from("2")),
-                ]),
-                FoamElement::List(vec![
-                    FoamElement::Element(String::from("4")),
-                    FoamElement::Element(String::from("5")),
-                ]),
-            ])],
-        )];
-        assert_eq!(result.as_ref(), &expected);
     }
 }
