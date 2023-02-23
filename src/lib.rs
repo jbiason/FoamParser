@@ -12,7 +12,7 @@ struct FoamParser;
 pub enum FoamElement {
     Element(String),
     Attribution(String, Vec<FoamElement>),
-    List(Vec<String>),
+    List(Vec<FoamElement>),
 }
 
 /// The main Foam parser.
@@ -63,25 +63,26 @@ impl Foam {
         println!("{:?}", pair);
         match pair.as_rule() {
             Rule::attribution => {
-                println!("Attribution: {:?}", pair);
                 let mut inner_rules = pair.into_inner();
                 let definition =
                     inner_rules.next().unwrap().as_str().to_string();
-                println!("Defition: {}", definition);
                 let elements = inner_rules
-                    .map(|pair| {
-                        println!("Att inner: {:?}", pair);
-                        Foam::parse_value(pair)
-                    })
+                    .map(|pair| Foam::parse_value(pair))
                     .collect::<Vec<FoamElement>>();
                 FoamElement::Attribution(definition, elements)
             }
-            Rule::value => {
-                println!("Value: {:?}", pair);
-                FoamElement::Element(pair.as_str().to_string())
+            Rule::value => FoamElement::Element(pair.as_str().to_string()),
+            Rule::list => {
+                println!("List: {:?}", pair);
+                let values = pair
+                    .into_inner()
+                    .map(|pair| {
+                        println!("List inner: {:?}", pair);
+                        Foam::parse_value(pair)
+                    })
+                    .collect::<Vec<FoamElement>>();
+                FoamElement::List(values)
             }
-            Rule::list => todo!(),
-            Rule::element => todo!(),
             r => panic!("Can't handle {r:?}"),
         }
     }
@@ -91,10 +92,75 @@ impl Foam {
 mod parser {
     use super::*;
 
-    #[test]
-    fn attribution() {
-        let result = FoamParser::parse(Rule::attribution, "a_var value;");
-        assert!(result.is_ok())
+    mod attrib {
+        use super::*;
+        #[test]
+        fn single_value() {
+            let result = FoamParser::parse(Rule::attribution, "a_var value;");
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn multiple_values() {
+            let result =
+                FoamParser::parse(Rule::attribution, "a_var value1 valu2;");
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn invalid_defintion() {
+            let result = FoamParser::parse(Rule::attribution, "1_var value;");
+            assert!(result.is_err());
+        }
+    }
+
+    mod multi_comment {
+        use super::*;
+
+        #[test]
+        fn comment() {
+            let result =
+                FoamParser::parse(Rule::multi_comment, "/* this is comment */");
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn broken() {
+            let result =
+                FoamParser::parse(Rule::multi_comment, "/* this is comment");
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn embedded() {
+            let result = FoamParser::parse(
+                Rule::multi_comment,
+                "/* this /* is */ comment */",
+            );
+            assert!(result.is_ok());
+        }
+    }
+
+    mod list {
+        use super::*;
+
+        #[test]
+        fn with_size() {
+            let result = FoamParser::parse(Rule::list, "2 ( 1 2 )");
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn no_size() {
+            let result = FoamParser::parse(Rule::list, "(1 2)");
+            assert!(result.is_ok());
+        }
+
+        #[test]
+        fn list_in_list() {
+            let result = FoamParser::parse(Rule::list, "( (1 2) (3 4))");
+            assert!(result.is_ok());
+        }
     }
 }
 
@@ -142,6 +208,20 @@ mod foam_struct {
                 vec![FoamElement::Element(String::from("value2"))],
             ),
         ];
+        assert_eq!(result.as_ref(), &expected);
+    }
+
+    #[test]
+    fn a_list() {
+        let text = "var ( 1 2 );";
+        let result = Foam::try_from(text).unwrap();
+        let expected = vec![FoamElement::Attribution(
+            String::from("var"),
+            vec![FoamElement::List(vec![
+                FoamElement::Element(String::from("1")),
+                FoamElement::Element(String::from("2")),
+            ])],
+        )];
         assert_eq!(result.as_ref(), &expected);
     }
 }
