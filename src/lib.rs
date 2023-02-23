@@ -63,7 +63,6 @@ impl TryFrom<&str> for Foam {
 
 impl Foam {
     fn parse_value(pair: Pair<Rule>) -> FoamElement {
-        println!("{:?}", pair);
         match pair.as_rule() {
             Rule::attribution => {
                 let mut inner_rules = pair.into_inner();

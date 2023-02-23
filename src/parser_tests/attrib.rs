@@ -20,3 +20,9 @@ fn invalid_defintion() {
     let result = FoamParser::parse(Rule::attribution, "1_var value;");
     assert!(result.is_err());
 }
+
+#[test]
+fn single_name() {
+    let result = FoamParser::parse(Rule::attribution, "a a;");
+    assert!(result.is_ok());
+}

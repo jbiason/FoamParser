@@ -13,7 +13,7 @@ WHITESPACE = _{ (spaces | multi_comment | single_comment)+ }
 // p(U) is a valid defintion (as long as it doesn't have any separators), but
 // they always must start with a letter.
 def_middle = _{ (letters | numbers | special_chars | "(" ~ def_middle ~ ")")+ } 
-definition = @{ letters ~ def_middle+ }
+definition = @{ letters ~ def_middle* }
 value = @{ (letters | numbers)+ ~ (letters | numbers | special_chars)* }
 
 // Lists are represented with "(" and ")".
@@ -30,9 +30,10 @@ list = { list_size?
 
 // Dictionaries have "{" and "}", but everything inside is a definition.
 dictionary = { "{"
-	~ (attribution | dictionary)
-	~ (attribution | dictionary)*
+	~ (attribution | dict_attribution)
+	~ (attribution | dict_attribution)*
 	~ "}" }
+dict_attribution = { definition ~ dictionary }
 
 // At top level, everything is an attribution. Everything is "definition
 // value;" but the format accepts multiple values in one attribution (e.g.,
@@ -40,24 +41,15 @@ dictionary = { "{"
 // kind of attribution and the usage of a list.
 // Inside dictionaries, the attribution of values also requires the tailing
 // `;`.
-element = _{ value | list }
+element = _{ dictionary | list | value } 
 attribution = { definition 
 	~ element 
 	~ element* 
 	~ ";" }
-inner = { attribution* }
+inner = { (dict_attribution | attribution)* }
 
 file = _{ SOI ~
 	inner
 	~ EOI }
 
 // include = { "#" ~ identifier ~ separator ~ "\"" ~ identifier ~ "\"" }
-// dictionary = { identifier ~ separator ~ "{" ~ (
-// 	dictionary
-// 	| list
-// 	| attribution 
-// 	| whitespace 
-// 	| multi_comment 
-// 	| single_comment 
-// 	| include
-// 	)+ ~ "}" }
