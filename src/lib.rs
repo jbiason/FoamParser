@@ -1,101 +1,49 @@
 //! Parse a Foam file into a major structure.
 
-#[cfg(test)]
-mod parser_tests;
-#[cfg(test)]
-mod struct_tests;
+use std::collections::HashMap;
 
-use pest::iterators::Pair;
-use pest::Parser;
-use pest_derive::Parser;
+mod tokenizer;
+mod parser;
 
-#[derive(Parser)]
-#[grammar = "foam.pest"]
-struct FoamParser;
+pub enum Foam<'a> {
+    /// A dictionary (key/value pairs).
+    /// The root of a foam documentation is always a dictionary, and the entries at the top level
+    /// are the keys. E.g., a foamfile consisting of
+    ///
+    /// ```cpp
+    /// variable value;
+    /// ```
+    ///
+    /// ... is actually a dictionary with "variable" as the key and "value" as its value; in the
+    /// same way,
+    ///
+    /// ```cpp
+    /// variable
+    /// {
+    ///     variable value;
+    /// }
+    /// ```
+    ///
+    /// ... is a dictionary in which the value is another dictionary.
+    Dictionary(HashMap<&'a str, Foam<'a>>),
 
-#[derive(Debug, PartialEq)]
-pub enum FoamElement {
-    Element(String),
-    Attribution(String, Vec<FoamElement>),
-    List(Vec<FoamElement>),
-    Dict(String, Vec<FoamElement>),
+    /// A list of values.
+    /// In Foam, it is possible to have multiple assigned values to a single variable, like
+    ///
+    /// ```cpp
+    /// variable 1 2 3;
+    /// ```
+    Values(Vec<&'a str>),
+
+    /// A list.
+    /// Weirdly enough, although it is possible to have a single attribution to have multiple
+    /// values, there is a List property that also allows multiple values.
+    /// Here, we are splitting those in two different camps: Attributions without list should only
+    /// contain single values, while Lists can have other Foam structures inside.
+    List(Vec<Foam<'a>>),
+
+    /// A dimensional list.
+    /// This works kinda like Lists, but are used for dimensional content.
+    Dimension(Vec<&'a str>),
 }
 
-/// The main Foam parser.
-#[derive(Debug, PartialEq)]
-pub struct Foam {
-    root: Vec<FoamElement>,
-}
-
-impl AsRef<Vec<FoamElement>> for Foam {
-    fn as_ref(&self) -> &Vec<FoamElement> {
-        &self.root
-    }
-}
-
-#[derive(Debug)]
-pub enum FoamError {
-    InvalidFile,
-    EmptyFile,
-}
-
-impl From<pest::error::Error<Rule>> for FoamError {
-    fn from(_: pest::error::Error<Rule>) -> Self {
-        FoamError::InvalidFile
-    }
-}
-
-impl TryFrom<&str> for Foam {
-    type Error = FoamError;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let file = FoamParser::parse(Rule::file, value)?
-            .next()
-            .ok_or(FoamError::EmptyFile)?;
-        println!("Root: {:?}", file);
-
-        let elements = file
-            .into_inner()
-            .map(|pair| Foam::parse_value(pair))
-            .collect::<Vec<FoamElement>>();
-        Ok(Foam { root: elements })
-    }
-}
-
-impl Foam {
-    fn parse_value(pair: Pair<Rule>) -> FoamElement {
-        match pair.as_rule() {
-            Rule::attribution => {
-                let mut inner_rules = pair.into_inner();
-                let definition =
-                    inner_rules.next().unwrap().as_str().to_string();
-                let elements = inner_rules
-                    .map(|pair| Foam::parse_value(pair))
-                    .collect::<Vec<FoamElement>>();
-                FoamElement::Attribution(definition, elements)
-            }
-            Rule::value => FoamElement::Element(pair.as_str().to_string()),
-            Rule::list => {
-                let values = pair
-                    .into_inner()
-                    .map(|pair| {
-                        println!("List inner: {:?}", pair);
-                        Foam::parse_value(pair)
-                    })
-                    .collect::<Vec<FoamElement>>();
-                FoamElement::List(values)
-            }
-            Rule::dict_attribution => {
-                println!("Dict: {:?}", pair);
-                let mut inner_rules = pair.into_inner();
-                let definition =
-                    inner_rules.next().unwrap().as_str().to_string();
-                let elements = inner_rules
-                    .map(|pair| Foam::parse_value(pair))
-                    .collect::<Vec<FoamElement>>();
-                FoamElement::Dict(definition, elements)
-            }
-            r => panic!("Can't handle \"{r:?}\""),
-        }
-    }
-}
