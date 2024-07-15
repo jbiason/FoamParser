@@ -3,7 +3,7 @@ use logos::Logos;
 #[allow(dead_code)]
 #[derive(Logos, Debug)]
 #[logos(skip r"[ \t\n\r]")]
-enum Token<'a> {
+pub(crate) enum Token<'a> {
     #[regex(r#"\/\*[^\/\*]*\*\/"#, |lex| lex.slice())]
     MultilineComment(&'a str),
 
