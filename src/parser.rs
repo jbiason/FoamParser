@@ -14,7 +14,7 @@ pub fn parse<'a>(content: &'a str) -> Result<Foam<'a>, FoamError<'a>> {
 
     loop {
         if let Some(key) = get_keyword(&mut lexer)? {
-            let value = get_value(&mut lexer)?;
+            let value = get_value(&mut lexer, "root")?;
             root.insert(key, value);
         } else {
             break;
@@ -49,6 +49,7 @@ fn get_keyword<'a>(
 
 fn get_value<'a>(
     lexer: &mut logos::Lexer<'a, Token<'a>>,
+    structure: &'a str,
 ) -> std::result::Result<Vec<Foam<'a>>, FoamError<'a>> {
     let mut result = Vec::new();
     loop {
@@ -70,13 +71,13 @@ fn get_value<'a>(
             Some(Ok(Token::ListEnd)) => {
                 return Err(FoamError::UnexpectedKeyword {
                     token: ")",
-                    structure: "dictionary",
+                    structure,
                 })
             }
             Some(Ok(Token::DictEnd)) => {
                 return Err(FoamError::UnexpectedKeyword {
                     token: "}",
-                    structure: "dictionary",
+                    structure,
                 })
             }
 
@@ -86,14 +87,71 @@ fn get_value<'a>(
 
             // Acceptable tokens
             Some(Ok(Token::Keyword(token))) => result.push(Foam::Value(token)),
-            Some(Ok(Token::DictStart)) => unimplemented!(),
-            Some(Ok(Token::ListStart)) => unimplemented!(),
+            Some(Ok(Token::DictStart)) => unimplemented!(), // result.push(get_dict(lexer)?),
+            Some(Ok(Token::ListStart)) => result.push(get_list(lexer)?),
 
             // Proper ending
             Some(Ok(Token::End)) => break,
         }
     }
     Ok(result)
+}
+
+fn get_dict<'a>(
+    lexer: &mut logos::Lexer<'a, Token<'a>>,
+) -> Result<Foam<'a>, FoamError<'a>> {
+    let mut result = HashMap::new();
+    Ok(Foam::Dictionary(result))
+}
+
+fn get_list<'a>(
+    lexer: &mut logos::Lexer<'a, Token<'a>>,
+) -> Result<Foam<'a>, FoamError<'a>> {
+    let mut result = Vec::new();
+    loop {
+        match lexer.next() {
+            None => return Err(FoamError::EndOfContent),
+            Some(Err(_)) => return Err(FoamError::EndOfContent),
+
+            Some(Ok(Token::DictEnd)) => {
+                return Err(FoamError::UnexpectedKeyword {
+                    token: "}",
+                    structure: "list",
+                })
+            }
+            Some(Ok(Token::End)) => {
+                return Err(FoamError::UnexpectedKeyword {
+                    token: ";",
+                    structure: "list",
+                })
+            }
+
+            Some(Ok(Token::MultilineComment(_))) => continue,
+            Some(Ok(Token::Comment(_))) => continue,
+
+            Some(Ok(Token::Keyword(token))) => result.push(Foam::Value(token)),
+            Some(Ok(Token::DictStart)) => unimplemented!(), // result.push(get_dict(lexer)?),
+            Some(Ok(Token::ListStart)) => result.push(get_list(lexer)?),
+
+            Some(Ok(Token::ListEnd)) => break,
+        }
+    }
+
+    // Just one small note: Lists are followed by ';', which we need to consume to not confused the
+    // parent caller. Also note that ';' is the only acceptable follower of the end of a list.
+    match lexer.next() {
+        Some(Ok(Token::End)) => (), // this is ok
+        None => return Err(FoamError::EndOfContent),
+        Some(Err(_)) => return Err(FoamError::EndOfContent),
+        Some(Ok(_token)) => {
+            return Err(FoamError::UnexpectedKeyword {
+                token: "?",
+                structure: "list",
+            })
+        }
+    }
+
+    Ok(Foam::List(result))
 }
 
 #[cfg(test)]
@@ -185,6 +243,32 @@ mod test {
             ("var1", vec![Foam::Value("value1")]),
             ("var2", vec![Foam::Value("value2"), Foam::Value("value3")]),
         ]);
+        assert_eq!(result, Ok(Foam::Dictionary(map)));
+    }
+
+    #[test]
+    fn simple_list() {
+        let result = parse("var (value1 value2);");
+        let map = HashMap::from([(
+            "var",
+            vec![Foam::List(vec![
+                Foam::Value("value1"),
+                Foam::Value("value2"),
+            ])],
+        )]);
+        assert_eq!(result, Ok(Foam::Dictionary(map)));
+    }
+
+    #[test]
+    fn lists_with_lists() {
+        let result = parse("var ( value1 ( inner2 ); );");
+        let map = HashMap::from([(
+            "var",
+            vec![Foam::List(vec![
+                Foam::Value("value1"),
+                Foam::List(vec![Foam::Value("inner2")]),
+            ])],
+        )]);
         assert_eq!(result, Ok(Foam::Dictionary(map)));
     }
 }
