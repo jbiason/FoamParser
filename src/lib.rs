@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 mod parser;
 mod tokenizer;
+mod output;
 
 pub use parser::parse;
 

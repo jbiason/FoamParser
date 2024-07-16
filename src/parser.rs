@@ -172,7 +172,7 @@ mod test {
 
     #[test]
     fn lists_with_lists() {
-        let result = parse("var ( value1 ( inner2 ); );");
+        let result = parse("var ( value1 ( inner2 ) );");
         let map = HashMap::from([(
             "var",
             vec![Foam::List(vec![
