@@ -8,7 +8,7 @@ pub(crate) enum Token<'a> {
     MultilineComment(&'a str),
 
     #[regex(r#""[^"]+""#, |lex| lex.slice().trim_start_matches('"').trim_end_matches('"'))]
-    #[regex("[a-zA-Z0-9]+", |lex| lex.slice())]
+    #[regex("[a-zA-Z0-9_]+", |lex| lex.slice())]
     Keyword(&'a str),
 
     #[regex(r#"//[^\n]*"#, |lex| lex.slice())]

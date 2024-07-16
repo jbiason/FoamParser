@@ -62,7 +62,7 @@ pub enum FoamError<'a> {
     },
 
     #[error("Unexpected keyword {token:?} when processing {structure}")]
-    UnexpectedKeyword {
+    UnexpectedToken {
         token: &'a str,
         structure: &'a str,
     }
