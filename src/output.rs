@@ -20,10 +20,22 @@ impl<'a> Foam<'a> {
         match self {
             Foam::Dictionary(map) => {
                 for (key, content) in map {
-                    write!(f, "{}\n{}{{", safe_keyword(key), in_level)?;
+                    write!(f, "{}", safe_keyword(key))?;
 
+                    if level != 0 {
+                        // Root is a FoamDictionary, but we don't wrap things in a dictionary
+                        write!(f, "\n{}{{", in_level)?;
+                    }
+
+                    let mut need_quote = true;
                     for element in content {
+                        if let Foam::List(_) = element {
+                            need_quote = false;
+                        }
                         element.display(level + 1, f)?;
+                    }
+                    if need_quote {
+                        write!(f, ";\n")?;
                     }
                 }
                 write!(f, "")
@@ -34,7 +46,8 @@ impl<'a> Foam<'a> {
                 for element in values {
                     element.display(level + 1, f)?;
                 }
-                write!(f, "{})\n", in_level)
+                write!(f, "\n")?;
+                write!(f, "{});\n", in_level)
             }
             Foam::Dimension(values) => {
                 write!(f, "[ ")?;
@@ -60,5 +73,32 @@ fn safe_keyword(keyword: &str) -> String {
 impl<'a> Display for Foam<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.display(0, f)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::parse;
+
+    #[test]
+    fn simple() {
+        let data = parse("var value;").unwrap();
+        let formatted = data.to_string();
+        assert_eq!(formatted, "var   value ;\n");
+    }
+
+    #[test]
+    fn two_values() {
+        let data = parse("var1 value1; var2 value2;").unwrap();
+        let formatted = data.to_string();
+        // Our dictionaries do not guarantee order (this is not in the spec, anyway)
+        assert_eq!(formatted, "var2   value2 ;\nvar1   value1 ;\n");
+    }
+
+    #[test]
+    fn a_list() {
+        let data = parse("var ( 1 2 3 );").unwrap();
+        let formatted = data.to_string();
+        assert_eq!(formatted, "var   (\n      1       2       3 \n   );\n");
     }
 }
