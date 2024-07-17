@@ -8,9 +8,11 @@ use crate::tokenizer::Token;
 use crate::Foam;
 use crate::FoamError;
 
-pub fn parse<'a>(content: &'a str) -> Result<Foam<'a>, FoamError<'a>> {
-    let mut lexer = Token::lexer(content);
-    Ok(get_dict(&mut lexer)?)
+impl<'a> Foam<'a> {
+    pub fn parse(content: &'a str) -> Result<Foam<'a>, FoamError<'a>> {
+        let mut lexer = Token::lexer(content);
+        Ok(get_dict(&mut lexer)?)
+    }
 }
 
 fn get_dict<'a>(
@@ -128,14 +130,14 @@ mod test {
 
     #[test]
     fn single_attribution() {
-        let result = parse("variable value;");
+        let result = Foam::parse("variable value;");
         let map = HashMap::from([("variable", vec![Foam::Value("value")])]);
         assert_eq!(result, Ok(Foam::Dictionary(map)));
     }
 
     #[test]
     fn mutiple_attributions() {
-        let result = parse("variable value1 value2 value3;");
+        let result = Foam::parse("variable value1 value2 value3;");
         let map = HashMap::from([(
             "variable",
             vec![
@@ -149,7 +151,7 @@ mod test {
 
     #[test]
     fn multiple_variables() {
-        let result = parse("var1 value1;\nvar2 value2 value3;");
+        let result = Foam::parse("var1 value1;\nvar2 value2 value3;");
         let map = HashMap::from([
             ("var1", vec![Foam::Value("value1")]),
             ("var2", vec![Foam::Value("value2"), Foam::Value("value3")]),
@@ -159,7 +161,7 @@ mod test {
 
     #[test]
     fn simple_list() {
-        let result = parse("var (value1 value2);");
+        let result = Foam::parse("var (value1 value2);");
         let map = HashMap::from([(
             "var",
             vec![Foam::List(vec![
@@ -172,7 +174,7 @@ mod test {
 
     #[test]
     fn lists_with_lists() {
-        let result = parse("var ( value1 ( inner2 ) );");
+        let result = Foam::parse("var ( value1 ( inner2 ) );");
         let map = HashMap::from([(
             "var",
             vec![Foam::List(vec![
@@ -185,7 +187,7 @@ mod test {
 
     #[test]
     fn simple_dict() {
-        let result = parse("entry { var value; }");
+        let result = Foam::parse("entry { var value; }");
         let inner = HashMap::from([("var", vec![Foam::Value("value")])]);
         let map = HashMap::from([("entry", vec![Foam::Dictionary(inner)])]);
         assert_eq!(result, Ok(Foam::Dictionary(map)));
@@ -193,7 +195,7 @@ mod test {
 
     #[test]
     fn dict_with_multiple_values() {
-        let result = parse("entry { var1 value1; var2 value2; }");
+        let result = Foam::parse("entry { var1 value1; var2 value2; }");
         let inner = HashMap::from([
             ("var1", vec![Foam::Value("value1")]),
             ("var2", vec![Foam::Value("value2")]),
@@ -204,7 +206,7 @@ mod test {
 
     #[test]
     fn dict_with_lists() {
-        let result = parse("outer { a_list ( 1 2 3 ); }");
+        let result = Foam::parse("outer { a_list ( 1 2 3 ); }");
         let inner = HashMap::from([(
             "a_list",
             vec![Foam::List(vec![
@@ -219,7 +221,7 @@ mod test {
 
     #[test]
     fn all_types() {
-        let result = parse("attribution 1;list (1 2);dict {inner 1;}");
+        let result = Foam::parse("attribution 1;list (1 2);dict {inner 1;}");
         let attribution = vec![Foam::Value("1")];
         let list = Foam::List(vec![Foam::Value("1"), Foam::Value("2")]);
         let dict = Foam::Dictionary(HashMap::from([(

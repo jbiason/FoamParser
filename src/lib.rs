@@ -2,11 +2,10 @@
 
 use std::collections::HashMap;
 
+mod access;
+mod output;
 mod parser;
 mod tokenizer;
-mod output;
-
-pub use parser::parse;
 
 /// The structures inside a Foamfile
 #[derive(Debug, PartialEq)]
@@ -63,8 +62,13 @@ pub enum FoamError<'a> {
     },
 
     #[error("Unexpected keyword {token:?} when processing {structure}")]
-    UnexpectedToken {
-        token: &'a str,
-        structure: &'a str,
-    }
+    UnexpectedToken { token: &'a str, structure: &'a str },
+
+    #[error(
+        "Requested key from dictionary, but current object is not a dictionary"
+    )]
+    NotADictionary,
+
+    #[error("The requested key does not exist")]
+    NoSuchKey,
 }
