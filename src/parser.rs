@@ -11,7 +11,7 @@ use crate::FoamError;
 impl<'a> Foam<'a> {
     pub fn parse(content: &'a str) -> Result<Foam<'a>, FoamError<'a>> {
         let mut lexer = Token::lexer(content);
-        Ok(get_dict(&mut lexer)?)
+        get_dict(&mut lexer)
     }
 }
 

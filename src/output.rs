@@ -6,7 +6,7 @@ use crate::Foam;
 
 /// List of characters that will force values to be quoted.
 /// (We could easily add quotes everywhere, but better like this).
-const NEED_QUOTE: &'static str = " \t()[]{}*\"";
+const NEED_QUOTE: &str = " \t()[]{}*\"";
 
 impl<'a> Foam<'a> {
     fn display(
@@ -35,19 +35,19 @@ impl<'a> Foam<'a> {
                         element.display(level + 1, f)?;
                     }
                     if need_quote {
-                        write!(f, ";\n")?;
+                        writeln!(f, ";")?;
                     }
                 }
                 write!(f, "")
             }
             Foam::Value(value) => write!(f, "{} ", safe_keyword(value)),
             Foam::List(values) => {
-                write!(f, "(\n")?;
+                writeln!(f, "(")?;
                 for element in values {
                     element.display(level + 1, f)?;
                 }
-                write!(f, "\n")?;
-                write!(f, "{});\n", in_level)
+                writeln!(f)?;
+                writeln!(f, "{});", in_level)
             }
             Foam::Dimension(values) => {
                 write!(f, "[ ")?;

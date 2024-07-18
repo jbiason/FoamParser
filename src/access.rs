@@ -44,10 +44,8 @@ impl<'a> Foam<'a> {
     pub fn get_first_value(&self, key: &str) -> Result<&str, FoamError> {
         match self.get(key) {
             Ok(entries) => {
-                let first = entries
-                    .iter()
-                    .skip_while(|x| !matches!(x, Foam::Value(_)))
-                    .next();
+                let first =
+                    entries.iter().find(|x| matches!(x, Foam::Value(_)));
                 if let Some(Foam::Value(entry)) = first {
                     Ok(entry)
                 } else {
