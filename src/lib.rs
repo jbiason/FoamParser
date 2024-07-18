@@ -71,4 +71,7 @@ pub enum FoamError<'a> {
 
     #[error("The requested key does not exist")]
     NoSuchKey,
+
+    #[error("The key exists, but none of its values matches the expected type")]
+    NoSuchValue,
 }

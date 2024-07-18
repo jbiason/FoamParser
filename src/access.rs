@@ -20,6 +20,43 @@ impl<'a> Foam<'a> {
             _ => Err(FoamError::NotADictionary),
         }
     }
+
+    /// Retrieve the first element from a dictionary.
+    ///
+    /// 1. The element *must* be a [`Foam::Dictionary`], or it will return
+    ///    [`FoamError::NotADictionary`]
+    /// 2. The key *must* exist, or it will return [`FoamError::NoSuchKey`]
+    /// 3. Foam supports multiple values from the same key, but this function will always return
+    ///    just the first one.
+    pub fn get_first(&self, key: &str) -> Result<&Foam<'a>, FoamError> {
+        self.get(key).map(|x| &x[0])
+    }
+
+    /// Retrieve the first [`Foam::Value`] from a dictionary.
+    ///
+    /// 1. The element *must* be a [`Foam::Dictionary`], or it will return
+    ///    [`FoamError::NotADictionary`]
+    /// 2. The key *must* exist, or it will return [`FoamError::NoSuchKey`]
+    /// 3. Foam supports multiple values from the same key, and this function will retrieve the
+    ///    first one that is a [`Foam::Value`].
+    /// 4. If none of the elements of the key is a [`Foam::Value`], this function will return
+    ///    [`FoamError::NoSuchValue`]
+    pub fn get_first_value(&self, key: &str) -> Result<&str, FoamError> {
+        match self.get(key) {
+            Ok(entries) => {
+                let first = entries
+                    .iter()
+                    .skip_while(|x| !matches!(x, Foam::Value(_)))
+                    .next();
+                if let Some(Foam::Value(entry)) = first {
+                    Ok(entry)
+                } else {
+                    Err(FoamError::NoSuchValue)
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -47,5 +84,20 @@ mod test {
         let root = Foam::parse("var value;").unwrap();
         let error = root.get("value");
         assert_eq!(error, Err(FoamError::NoSuchKey));
+    }
+
+    #[test]
+    fn get_first() {
+        let root = Foam::parse("var (1) 2;").unwrap();
+        let first = root.get_first("var");
+        let list = vec![Foam::Value("1")];
+        assert_eq!(first, Ok(&Foam::List(list)));
+    }
+
+    #[test]
+    fn get_first_value() {
+        let root = Foam::parse("var (1) 2;").unwrap();
+        let first = root.get_first_value("var");
+        assert_eq!(first, Ok("2"));
     }
 }
