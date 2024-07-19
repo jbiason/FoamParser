@@ -41,6 +41,8 @@ impl<'a> Foam<'a> {
     ///    first one that is a [`Foam::Value`].
     /// 4. If none of the elements of the key is a [`Foam::Value`], this function will return
     ///    [`FoamError::NoSuchValue`]
+    /// 5. The function will return the inner value of the [`Foam::Value`], so there is no need to
+    ///    "destructure" the result.
     pub fn get_first_value(&self, key: &str) -> Result<&str, FoamError> {
         match self.get(key) {
             Ok(entries) => {
@@ -48,6 +50,33 @@ impl<'a> Foam<'a> {
                     entries.iter().find(|x| matches!(x, Foam::Value(_)));
                 if let Some(Foam::Value(entry)) = first {
                     Ok(entry)
+                } else {
+                    Err(FoamError::NoSuchValue)
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Retrieve the first [`Foam::List`] from a dictionary.
+    ///
+    /// 1. The element *must* be a [`Foam::Dictionary`], or it will return
+    ///    [`FoamError::NotADictionary`]
+    /// 2. The key *must* exist, or it will return [`FoamError::NoSuchKey`]
+    /// 3. Foam supports multiple values from the same key, and this function will retrieve the
+    ///    first one that is a [`Foam::List`].
+    /// 4. If none of the elements of the key is a [`Foam::List`], this function will return
+    ///    [`FoamError::NoSuchValue`]
+    /// 5. The function will return the inner array of the [`Foam::LIst`], so there is no need to
+    ///    "destructure" the result.
+    /// 6. Note that *only* the List will be returned as an array; it will still hold any [`Foam`]
+    ///    elements as they are.
+    pub fn get_first_list(&self, key: &str) -> Result<&[Foam<'a>], FoamError> {
+        match self.get(key) {
+            Ok(entries) => {
+                let first = entries.iter().find(|x| matches!(x, Foam::List(_)));
+                if let Some(Foam::List(entries)) = first {
+                    Ok(entries)
                 } else {
                     Err(FoamError::NoSuchValue)
                 }
@@ -97,5 +126,13 @@ mod test {
         let root = Foam::parse("var (1) 2;").unwrap();
         let first = root.get_first_value("var");
         assert_eq!(first, Ok("2"));
+    }
+
+    #[test]
+    fn get_first_list() {
+        let root = Foam::parse("var 1 2 ( 3 4 );").unwrap();
+        let first = root.get_first_list("var");
+        let list = vec![Foam::Value("3"), Foam::Value("4")];
+        assert_eq!(first, Ok(list.as_slice()));
     }
 }
