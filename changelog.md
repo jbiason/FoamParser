@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 2024-07-22
+
+### 🚀 Features
+
+- Added a function to access the contents of a Dictionary directly
+
 ## [0.2.2] - 2024-07-19
 
 ### 🚀 Features
