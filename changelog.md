@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2024-07-19
+
+### 🚀 Features
+
+- Retrieve lists from dicts
+
 ## [0.2.1] - 2024-07-18
 
 ### 🚀 Features
