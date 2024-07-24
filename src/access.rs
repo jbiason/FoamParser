@@ -183,4 +183,32 @@ impl<'a> Foam<'a> {
             _ => Err(FoamError::NotADictionary),
         }
     }
+
+    /// Treat the current element as a value and return its underlying value.
+    ///
+    /// ```
+    /// # use foamparser::Foam;
+    /// # use foamparser::FoamError;
+    /// let root = Foam::parse("var 3;").unwrap();
+    /// let var = root.get_first("var").unwrap();
+    /// let value = var.as_value().unwrap();
+    /// assert_eq!(value, "3");
+    /// ```
+    ///
+    /// Trying to use an element that is not a value will result in [`FoamError::NotAValue`].
+    ///
+    /// ```
+    /// # use foamparser::Foam;
+    /// # use foamparser::FoamError;
+    /// let root = Foam::parse("var (3);").unwrap();
+    /// let var = root.get_first("var").unwrap();
+    /// let value = var.as_value();
+    /// assert_eq!(value, Err(FoamError::NotAValue))
+    /// ```
+    pub fn as_value(&self) -> Result<&'a str, FoamError> {
+        match self {
+            Foam::Value(inner) => Ok(inner),
+            _ => Err(FoamError::NotAValue),
+        }
+    }
 }

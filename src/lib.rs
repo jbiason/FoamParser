@@ -69,9 +69,14 @@ pub enum FoamError<'a> {
     )]
     NotADictionary,
 
+    #[error("The current element is not a value")]
+    NotAValue,
+
     #[error("The requested key does not exist")]
     NoSuchKey,
 
-    #[error("The key exists, but none of its values matches the expected type")]
+    #[error(
+        "The key exists, but none of its values matches the expected type"
+    )]
     NoSuchValue,
 }
