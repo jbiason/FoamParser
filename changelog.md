@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2024-07-24
+
+### 🚀 Features
+
+- Added a helper function to extract the value of a Foam::Value directly
+
 ## [0.2.3] - 2024-07-22
 
 ### 🚀 Features
