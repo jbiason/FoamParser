@@ -237,12 +237,4 @@ mod test {
         ]));
         assert_eq!(result, Ok(main));
     }
-
-    #[test]
-    fn named_dicts() {
-        let result =
-            Foam::parse("list ( name1 { inner 1; } name2 { inner 2; } )")
-                .unwrap();
-        println!("{result:?}");
-    }
 }
