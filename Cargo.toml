@@ -1,6 +1,6 @@
 [package]
 name = "foamparser"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = ["Julio Biason <julio.biason@pm.me>"]
 description = "A parser for Foamfiles"

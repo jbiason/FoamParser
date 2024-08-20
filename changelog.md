@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.5] - 2024-08-20
+
+### 🐛 Bug Fixes
+
+- Accept "/" as part of a value
+
 ## [0.2.4] - 2024-07-24
 
 ### 🚀 Features
