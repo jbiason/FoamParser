@@ -22,7 +22,9 @@ fn get_dict<'a>(
     let mut key = None;
     let mut key_values = Vec::new();
     loop {
-        match lexer.next() {
+        let token = lexer.next();
+        tracing::debug!(?token);
+        match token {
             None => break,
             Some(Err(_)) => return Err(FoamError::EndOfContent),
 
@@ -238,8 +240,9 @@ mod test {
 
     #[test]
     fn named_dicts() {
-        let result = Foam::parse("list ( name1 { inner 1; } name2 { inner 2; } )").unwrap();
+        let result =
+            Foam::parse("list ( name1 { inner 1; } name2 { inner 2; } )")
+                .unwrap();
         println!("{result:?}");
-
     }
 }
