@@ -146,6 +146,59 @@ impl<'a> Foam<'a> {
         }
     }
 
+    /// Retrieve the first [`Foam::Dictionary`] from a dictionary.
+    ///
+    /// This works similar to [`Foam::get_first_value`], but skips any elements that are not lists.
+    ///
+    /// ```
+    /// # use foamparser::Foam;
+    /// # use foamparser::FoamError;
+    /// # use std::collections::HashMap;
+    /// let root = Foam::parse("not_dict 1; dict { a 1; }").unwrap();
+    /// let var = root.get_first_dict("dict");
+    /// let inner = HashMap::from([
+    ///     ("a", vec![Foam::Value("1")])
+    /// ]);
+    /// assert_eq!(var, Ok(&inner));
+    /// ```
+    ///
+    /// If the element is not a dictionary, [`FoamError::NoSuchValue`] will be returned as error.
+    ///
+    /// ```
+    /// # use foamparser::Foam;
+    /// # use foamparser::FoamError;
+    /// let root = Foam::parse("not_dict 1; maybe_not_dict ( a 1 );").unwrap();
+    /// let var = root.get_first_dict("maybe_not_dict");
+    /// assert_eq!(var, Err(FoamError::NoSuchValue));
+    /// ```
+    ///
+    /// If the there is not even an element with that key, [`FoamError::NoSuchKey`] will be
+    /// returned.
+    ///
+    /// ```
+    /// # use foamparser::Foam;
+    /// # use foamparser::FoamError;
+    /// let root = Foam::parse("not_dict 1; dict { a 1; }").unwrap();
+    /// let var = root.get_first_dict("noSuchThing");
+    /// assert_eq!(var, Err(FoamError::NoSuchKey));
+    pub fn get_first_dict(
+        &self,
+        key: &str,
+    ) -> Result<&HashMap<&str, Vec<Foam<'a>>>, FoamError> {
+        match self.get(key) {
+            Ok(entries) => {
+                let first =
+                    entries.iter().find(|x| matches!(x, Foam::Dictionary(_)));
+                if let Some(Foam::Dictionary(entry)) = first {
+                    Ok(&entry)
+                } else {
+                    Err(FoamError::NoSuchValue)
+                }
+            }
+            Err(e) => Err(e),
+        }
+    }
+
     /// Treat the current element as a dictionary and returns its underlying map.
     ///
     /// ```
