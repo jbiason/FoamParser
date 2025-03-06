@@ -62,6 +62,7 @@ fn get_dict<'a>(
             // As per the rule above, if we have the key, then we have a list of elements, and we
             // can just push them into the current key. This resets the key and its values.
             Some(Ok(Token::End)) => {
+                tracing::debug!(?key, ?key_values);
                 result.insert(key.unwrap(), key_values);
                 key = None;
                 key_values = Vec::new();
@@ -74,10 +75,15 @@ fn get_dict<'a>(
                 key = Some(token);
             }
             Some(Ok(Token::Keyword(token))) => {
-                key_values.push(Foam::Value(token))
+                key_values.push(Foam::Value(token));
+                tracing::debug!(?key, ?key_values);
             }
             Some(Ok(Token::ListStart)) => key_values.push(get_list(lexer)?),
-            Some(Ok(Token::DictStart)) => key_values.push(get_dict(lexer)?),
+            Some(Ok(Token::DictStart)) => {
+                result.insert(key.unwrap(), vec![get_dict(lexer)?]);
+                key = None;
+                key_values = Vec::new();
+            }
 
             Some(Ok(Token::DictEnd)) => {
                 break;
@@ -85,6 +91,7 @@ fn get_dict<'a>(
         }
     }
     if let Some(key) = key {
+        tracing::debug!(?key, ?key_values);
         result.insert(key, key_values);
     }
 
@@ -96,7 +103,9 @@ fn get_list<'a>(
 ) -> Result<Foam<'a>, FoamError<'a>> {
     let mut result = Vec::new();
     loop {
-        match lexer.next() {
+        let token = lexer.next();
+        tracing::debug!(?token);
+        match token {
             None => return Err(FoamError::EndOfContent),
             Some(Err(_)) => return Err(FoamError::EndOfContent),
 
@@ -236,5 +245,46 @@ mod test {
             ("dict", vec![dict]),
         ]));
         assert_eq!(result, Ok(main));
+    }
+
+    #[test]
+    fn var_dict_list() {
+        use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+
+        tracing_subscriber::registry()
+            .with(fmt::layer())
+            .with(EnvFilter::from_default_env())
+            .init();
+
+        let example = "variable 2;
+innerDict
+{
+    variable 3;
+}
+aList
+(
+    {
+        variable 4;
+    }
+);
+";
+        let result = Foam::parse(example).unwrap();
+        let list_dict = Foam::Dictionary(HashMap::from([(
+            "variable",
+            vec![Foam::Value("4")],
+        )]));
+        let a_list = Foam::List(vec![list_dict]);
+        let inner_dict = Foam::Dictionary(HashMap::from([(
+            "variable",
+            vec![Foam::Value("3")],
+        )]));
+        let expected = Foam::Dictionary(HashMap::from([
+            ("variable", vec![Foam::Value("2")]),
+            ("innerDict", vec![inner_dict]),
+            ("aList", vec![a_list]),
+        ]));
+        assert_eq!(result, expected);
+
+        println!("{:?}", result.get_first_list("aList").unwrap());
     }
 }
