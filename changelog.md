@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.2.7] - 2025-03-06
+
+### 🐛 Bug Fixes
+
+- Fixed an issue that the parser would think a new entry after a dictionary is the continuation of the entry with the dictionary
+
+## [0.2.6] - 2024-08-30
 
 ### 🚀 Features
 
